@@ -1,7 +1,7 @@
 # flea_aiexperiment1
 26fallAI — Experiment 1: Text Classification
 
-# 人工智能导论 · 实验一：文本分类
+# 人工智能 · 实验一：文本分类
 
 ## 一、实验简介
 
