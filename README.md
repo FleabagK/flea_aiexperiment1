@@ -60,6 +60,32 @@
 
 MLP 在 30 次迭代后达到预设迭代上限，训练过程中出现未收敛警告，因此其结果应结合损失曲线谨慎解读。
 
+### 4. 邮件头字段消融实验
+
+为进一步分析邮件头信息对文本分类性能的影响，本实验固定训练集与验证集划分、TF-IDF 最大特征数（5000）及逻辑回归参数（C=100），分别删除单个邮件头字段，并与原始文本基线及同时删除全部五个字段的设置进行比较。
+
+| 实验设置 | Accuracy | Macro-F1 |
+|---|---:|---:|
+| 不删除（基线） | 0.9159 | 0.9162 |
+| 删除 From | 0.9172 | 0.9177 |
+| 删除 Organization | 0.9132 | 0.9136 |
+| 删除 Lines | 0.9152 | 0.9154 |
+| 删除 Reply-To | 0.9138 | 0.9142 |
+| 删除 NNTP-Posting-Host | 0.9186 | 0.9188 |
+| 删除全部五个字段 | 0.9166 | 0.9169 |
+
+**结果分析：**
+
+- 删除 `NNTP-Posting-Host` 后，Macro-F1 达到 0.9188，是本组实验中的最佳结果。
+- 删除 `Organization` 和 `Reply-To` 后，Macro-F1 分别下降至 0.9136 和 0.9142，说明不同邮件头字段对分类可能具有不同作用。
+- 删除全部五个字段后的 Macro-F1 为 0.9169，低于仅删除 `NNTP-Posting-Host` 的结果。
+
+实验说明，邮件头字段不应被一概视为噪声，有针对性的文本预处理可能比无差别删除更多信息更有效。由于本实验仅采用一次固定的数据划分，且指标变化较小，尚不能判断这些差异是否具有统计显著性。
+
+本次消融实验中，仅删除 NNTP-Posting-Host 的设置取得了更高的验证集指标，但最终模型仍采用预先设定的五字段清洗方案。若要进一步优化模型，可将该单字段清洗方案作为候选方案，在独立测试或交叉验证中继续评估。
+
+实验结果文件：`ablation_results.csv`。
+
 ## 五、最终预测
 
 根据验证集结果，选择清洗文本后的逻辑回归模型（`C=100`）作为最终模型。在全部 7,368 条有标签数据上重新拟合 TF-IDF 和逻辑回归模型，再对 2,457 条无标签测试数据进行预测。
@@ -68,23 +94,30 @@ MLP 在 30 次迭代后达到预设迭代上限，训练过程中出现未收敛
 
 ## 六、文件说明
 
-- `ai_experiment_1.py`：完整实验代码。
-- `predictions.csv`：测试集预测结果。
+- `ai_experiment_1.py`：完整实验代码，包含模型比较、文本清洗、消融实验和最终预测。
+- `predictions.csv`：无标签测试集的预测结果。
+- `ablation_results.csv`：邮件头字段消融实验的指标结果。
 - `mlp_loss_curve.png`：MLP 训练损失曲线。
 
 ## 七、运行环境与方法
 
-主要依赖：Python、pandas、scikit-learn、matplotlib。
+**主要依赖：** Python、pandas、scikit-learn、matplotlib。
 
-将代码、`train_data.csv` 和 `test_data_unlabeled.csv` 放在同一目录下，安装所需依赖后运行：
+安装依赖：
+
+```bash
+pip install pandas scikit-learn matplotlib
+```
+
+将 `ai_experiment_1.py`、`train_data.csv` 和 `test_data_unlabeled.csv` 放在同一目录下，在该目录中运行：
 
 ```bash
 python ai_experiment_1.py
 ```
 
-程序将输出各模型的验证集指标，生成 `mlp_loss_curve.png` 和 `predictions.csv`。
+程序将输出各模型的验证集指标，并生成 `mlp_loss_curve.png`、`predictions.csv` 和 `ablation_results.csv`。
 
-本实验代码中的数据文件路径为相对路径，运行前需确保两个数据文件位于当前工作目录中。
+注意：运行前需确认两个数据文件已放置在代码所使用的相对路径下。如果数据集未上传至 GitHub，运行者需要另行获取数据文件。
 
 ## 八、仓库地址
 
